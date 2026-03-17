@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/asish/bloop/internal/letterboxd"
+	"github.com/asish/flicksy/internal/letterboxd"
 )
 
 type LetterboxdSource interface {

@@ -1,13 +1,13 @@
 GO ?= $(shell command -v go || echo /opt/homebrew/bin/go)
-BINARY := bloop
+BINARY := flicksy
 
 .PHONY: build test run
 
 build:
-	$(GO) build -o $(BINARY) ./cmd/bloop
+	$(GO) build -o $(BINARY) ./cmd/flicksy
 
 test:
 	$(GO) test ./...
 
 run:
-	$(GO) run ./cmd/bloop
+	$(GO) run ./cmd/flicksy

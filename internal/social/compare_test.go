@@ -3,7 +3,7 @@ package social
 import (
 	"testing"
 
-	"github.com/asish/bloop/internal/letterboxd"
+	"github.com/asish/flicksy/internal/letterboxd"
 )
 
 func TestCompatibilityScoreRewardsOverlap(t *testing.T) {

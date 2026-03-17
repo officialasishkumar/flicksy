@@ -5,8 +5,8 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/asish/bloop/internal/letterboxd"
-	"github.com/asish/bloop/internal/store"
+	"github.com/asish/flicksy/internal/letterboxd"
+	"github.com/asish/flicksy/internal/store"
 )
 
 type FeedSource interface {

@@ -6,10 +6,10 @@ import (
 	"log/slog"
 	"path/filepath"
 
-	"github.com/asish/bloop/internal/bot"
-	"github.com/asish/bloop/internal/config"
-	"github.com/asish/bloop/internal/letterboxd"
-	"github.com/asish/bloop/internal/store"
+	"github.com/asish/flicksy/internal/bot"
+	"github.com/asish/flicksy/internal/config"
+	"github.com/asish/flicksy/internal/letterboxd"
+	"github.com/asish/flicksy/internal/store"
 )
 
 type App struct {
@@ -48,10 +48,10 @@ func New(_ context.Context, logger *slog.Logger) (*App, error) {
 }
 
 func (a *App) Run(ctx context.Context) error {
-	a.logger.Info("bloop initialized", "app_name", a.config.AppName, "data_dir", a.config.DataDir)
+	a.logger.Info("flicksy initialized", "app_name", a.config.AppName, "data_dir", a.config.DataDir)
 	if err := a.bot.Run(ctx); err != nil {
 		return err
 	}
-	a.logger.Info("bloop shutting down")
+	a.logger.Info("flicksy shutting down")
 	return nil
 }

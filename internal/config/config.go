@@ -19,27 +19,27 @@ type Config struct {
 }
 
 func Load() (Config, error) {
-	dataDir := getenv("BLOOP_DATA_DIR", filepath.Join(".", "data"))
+	dataDir := getenv("FLICKSY_DATA_DIR", filepath.Join(".", "data"))
 
-	httpTimeout, err := durationFromEnv("BLOOP_HTTP_TIMEOUT", 15*time.Second)
+	httpTimeout, err := durationFromEnv("FLICKSY_HTTP_TIMEOUT", 15*time.Second)
 	if err != nil {
 		return Config{}, err
 	}
 
-	pollInterval, err := durationFromEnv("BLOOP_POLL_INTERVAL", 5*time.Minute)
+	pollInterval, err := durationFromEnv("FLICKSY_POLL_INTERVAL", 5*time.Minute)
 	if err != nil {
 		return Config{}, err
 	}
 
 	cfg := Config{
-		AppName:      "Bloop",
+		AppName:      "Flicksy",
 		DiscordToken: os.Getenv("DISCORD_TOKEN"),
 		GuildID:      os.Getenv("DISCORD_GUILD_ID"),
 		DataDir:      dataDir,
 		HTTPTimeout:  httpTimeout,
 		PollInterval: pollInterval,
-		UserAgent: getenv("BLOOP_USER_AGENT",
-			"Mozilla/5.0 (compatible; Bloop/1.0; +https://github.com/asish/bloop)",
+		UserAgent: getenv("FLICKSY_USER_AGENT",
+			"Mozilla/5.0 (compatible; Flicksy/1.0; +https://github.com/asish/flicksy)",
 		),
 	}
 

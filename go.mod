@@ -1,4 +1,4 @@
-module github.com/asish/bloop
+module github.com/asish/flicksy
 
 go 1.26.0
 
