@@ -91,9 +91,22 @@ If you add official Letterboxd API credentials, Flicksy unlocks richer search an
 ## Development
 
 ```bash
+make ci
 make test
 make build
 make run
+make release VERSION=v0.1.0
+```
+
+## GitHub Actions
+
+- CI runs on every push, pull request, and manual dispatch.
+- CD publishes GitHub Release assets when you push a version tag like `v0.1.0`.
+- Release artifacts are written to `dist/` and include checksums plus binaries for Linux, macOS, and Windows.
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
 ```
 
 ## Notes and limitations
