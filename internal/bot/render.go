@@ -8,9 +8,9 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 
-	"github.com/asish/filmpal/internal/letterboxd"
-	"github.com/asish/filmpal/internal/social"
-	"github.com/asish/filmpal/internal/store"
+	"github.com/asish/bloop/internal/letterboxd"
+	"github.com/asish/bloop/internal/social"
+	"github.com/asish/bloop/internal/store"
 )
 
 const (
@@ -20,7 +20,7 @@ const (
 
 func helpEmbed() *discordgo.MessageEmbed {
 	return &discordgo.MessageEmbed{
-		Title:       "FilmPal",
+		Title:       "Bloop",
 		Description: "A Letterboxd Discord bot built for easy profile lookups, channel follows, and taste comparisons.",
 		Color:       accentColor,
 		Fields: []*discordgo.MessageEmbedField{

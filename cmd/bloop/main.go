@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/asish/filmpal/internal/app"
+	"github.com/asish/bloop/internal/app"
 )
 
 func main() {

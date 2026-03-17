@@ -1,4 +1,4 @@
-module github.com/asish/filmpal
+module github.com/asish/bloop
 
 go 1.26.0
 

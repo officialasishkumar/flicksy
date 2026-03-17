@@ -11,11 +11,11 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 
-	"github.com/asish/filmpal/internal/config"
-	"github.com/asish/filmpal/internal/follows"
-	"github.com/asish/filmpal/internal/letterboxd"
-	"github.com/asish/filmpal/internal/social"
-	"github.com/asish/filmpal/internal/store"
+	"github.com/asish/bloop/internal/config"
+	"github.com/asish/bloop/internal/follows"
+	"github.com/asish/bloop/internal/letterboxd"
+	"github.com/asish/bloop/internal/social"
+	"github.com/asish/bloop/internal/store"
 )
 
 type Bot struct {
@@ -97,7 +97,7 @@ func (b *Bot) onInteractionCreate(session *discordgo.Session, event *discordgo.I
 		return
 	}
 	if event.GuildID == "" {
-		respondImmediate(session, event.Interaction, "FilmPal does not support direct messages.", true)
+		respondImmediate(session, event.Interaction, "Bloop does not support direct messages.", true)
 		return
 	}
 
@@ -252,7 +252,7 @@ func (b *Bot) handleList(ctx context.Context, event *discordgo.InteractionCreate
 	}
 	if listSummary == nil {
 		return commandResponse{
-			content: fmt.Sprintf("No recent public list matched that search for `%s`. FilmPal searches the public RSS list history, so older/private lists may not appear.", username),
+			content: fmt.Sprintf("No recent public list matched that search for `%s`. Bloop searches the public RSS list history, so older/private lists may not appear.", username),
 		}, nil
 	}
 
