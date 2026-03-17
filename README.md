@@ -23,6 +23,8 @@ If you add official Letterboxd API credentials, Flicksy unlocks richer search an
 - Pick a random movie from a public watchlist with `/watchpick`
 - Show recent all-up activity with `/activity`
 - Discover popular films with `/discover`
+- Match watchlists between multiple users with `/party`
+- Get personalized recommendations with `/rec`
 - Clear in-memory cache with `/refresh`
 
 ## Why the bot is easier to use
@@ -55,6 +57,8 @@ If you add official Letterboxd API credentials, Flicksy unlocks richer search an
 - `/watchpick [username] [genre]` when official API credentials are configured
 - `/activity [username] [count]` when official API credentials are configured
 - `/discover [genre] [service] [count]` when official API credentials are configured
+- `/party user1 user2 [user3] [user4] [user5]` when official API credentials are configured
+- `/rec [username]` when official API credentials are configured
 
 ## Setup
 
