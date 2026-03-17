@@ -2,8 +2,8 @@ package bot
 
 import "github.com/bwmarrin/discordgo"
 
-func slashCommands() []*discordgo.ApplicationCommand {
-	return []*discordgo.ApplicationCommand{
+func slashCommands(includeOfficialAPI bool) []*discordgo.ApplicationCommand {
+	commands := []*discordgo.ApplicationCommand{
 		{
 			Name:        "help",
 			Description: "Show Flicksy commands and shortcuts",
@@ -199,4 +199,96 @@ func slashCommands() []*discordgo.ApplicationCommand {
 			},
 		},
 	}
+
+	if includeOfficialAPI {
+		commands = append(commands, []*discordgo.ApplicationCommand{
+			{
+				Name:        "stats",
+				Description: "Show Letterboxd member stats",
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "username",
+						Description: "Letterboxd username, or leave blank to use your linked account",
+					},
+				},
+			},
+			{
+				Name:        "watchlist",
+				Description: "Show a member's watchlist",
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "username",
+						Description: "Letterboxd username, or leave blank to use your linked account",
+					},
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "genre",
+						Description: "Optional genre or keyword filter",
+					},
+					{
+						Type:        discordgo.ApplicationCommandOptionInteger,
+						Name:        "count",
+						Description: "How many films to show (1-10)",
+					},
+				},
+			},
+			{
+				Name:        "watchpick",
+				Description: "Pick a random film from a member's watchlist",
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "username",
+						Description: "Letterboxd username, or leave blank to use your linked account",
+					},
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "genre",
+						Description: "Optional genre or keyword filter",
+					},
+				},
+			},
+			{
+				Name:        "activity",
+				Description: "Show recent official Letterboxd activity",
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "username",
+						Description: "Letterboxd username, or leave blank to use your linked account",
+					},
+					{
+						Type:        discordgo.ApplicationCommandOptionInteger,
+						Name:        "count",
+						Description: "How many items to show (1-10)",
+					},
+				},
+			},
+			{
+				Name:        "discover",
+				Description: "Discover films by genre or service",
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "genre",
+						Description: "Optional genre or keyword filter",
+					},
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "service",
+						Description: "Optional streaming service filter",
+					},
+					{
+						Type:        discordgo.ApplicationCommandOptionInteger,
+						Name:        "count",
+						Description: "How many films to show (1-10)",
+					},
+				},
+			},
+		}...)
+	}
+
+	return commands
 }

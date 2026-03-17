@@ -4,6 +4,8 @@ Flicksy is a self-hosted Discord bot for Letterboxd communities, built in Go and
 
 It focuses on public Letterboxd pages and RSS feeds, so it works without private API access or GCP infrastructure.
 
+If you add official Letterboxd API credentials, Flicksy unlocks richer search and discovery without changing how people use the bot in Discord.
+
 ## What it does
 
 - Link a Discord user to a default Letterboxd account with `/connect`
@@ -16,11 +18,17 @@ It focuses on public Letterboxd pages and RSS feeds, so it works without private
 - Compare two profiles with `/compare`
 - Score compatibility with `/taste`
 - Do film discovery with `/roulette`
+- Show richer member stats with `/stats`
+- Browse a public watchlist with `/watchlist`
+- Pick a random movie from a public watchlist with `/watchpick`
+- Show recent all-up activity with `/activity`
+- Discover popular films with `/discover`
 - Clear in-memory cache with `/refresh`
 
 ## Why the bot is easier to use
 
 - Most commands can use your linked account automatically after `/connect`
+- API-powered member commands also use your linked account by default
 - The bot is a single Go binary
 - State is stored in one JSON file under `data/state.json`
 - No database, queue, or cloud service is required
@@ -42,6 +50,11 @@ It focuses on public Letterboxd pages and RSS feeds, so it works without private
 - `/compare other [username]`
 - `/taste other [username]`
 - `/roulette [theme]`
+- `/stats [username]` when official API credentials are configured
+- `/watchlist [username] [genre] [count]` when official API credentials are configured
+- `/watchpick [username] [genre]` when official API credentials are configured
+- `/activity [username] [count]` when official API credentials are configured
+- `/discover [genre] [service] [count]` when official API credentials are configured
 
 ## Setup
 
@@ -66,6 +79,10 @@ It focuses on public Letterboxd pages and RSS feeds, so it works without private
   Optional. Defaults to `5m`.
 - `FLICKSY_USER_AGENT`
   Optional. Override the default HTTP user agent.
+- `FLICKSY_LETTERBOXD_CLIENT_ID`
+  Optional. Enables official API-backed commands and search/discovery upgrades.
+- `FLICKSY_LETTERBOXD_CLIENT_SECRET`
+  Optional. Must be set together with `FLICKSY_LETTERBOXD_CLIENT_ID`.
 
 ## Development
 
@@ -78,7 +95,8 @@ make run
 ## Notes and limitations
 
 - Flicksy intentionally uses public Letterboxd surfaces instead of private API access.
+- Official API support is optional and uses the documented Letterboxd API with client credentials.
 - Profile, film, diary, and follow features are based on public profile pages, film pages, and RSS feeds.
 - List search is limited to the public RSS list history available for a user.
 - `/logged` works against the recent public RSS window, not a complete historical archive.
-- Film search uses DuckDuckGo site search to avoid the Cloudflare challenge on Letterboxd search pages.
+- Film search falls back to DuckDuckGo site search when the official API is not configured.

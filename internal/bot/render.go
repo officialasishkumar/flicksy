@@ -18,18 +18,26 @@ const (
 	alertColor  = 0xF77F00
 )
 
-func helpEmbed() *discordgo.MessageEmbed {
+func helpEmbed(includeOfficialAPI bool) *discordgo.MessageEmbed {
+	fields := []*discordgo.MessageEmbedField{
+		{Name: "Get started", Value: "`/connect username` links your default profile so most commands work without repeating it.", Inline: false},
+		{Name: "Profiles", Value: "`/profile`, `/diary`, `/film`, `/list`, `/logged`", Inline: false},
+		{Name: "Channel feeds", Value: "`/follow`, `/unfollow`, `/following`", Inline: false},
+		{Name: "Social features", Value: "`/compare`, `/taste`, `/roulette`", Inline: false},
+		{Name: "Cache", Value: "`/refresh` clears cached Letterboxd data if something looks stale.", Inline: false},
+	}
+	if includeOfficialAPI {
+		fields = append(fields, &discordgo.MessageEmbedField{
+			Name:  "Official API",
+			Value: "`/stats`, `/watchlist`, `/watchpick`, `/activity`, `/discover`",
+		})
+	}
+
 	return &discordgo.MessageEmbed{
 		Title:       "Flicksy",
-		Description: "A Letterboxd Discord bot built for easy profile lookups, channel follows, and taste comparisons.",
+		Description: "A Letterboxd Discord bot built for easy profile lookups, channel follows, taste comparisons, and API-backed discovery.",
 		Color:       accentColor,
-		Fields: []*discordgo.MessageEmbedField{
-			{Name: "Get started", Value: "`/connect username` links your default profile so most commands work without repeating it.", Inline: false},
-			{Name: "Profiles", Value: "`/profile`, `/diary`, `/film`, `/list`, `/logged`", Inline: false},
-			{Name: "Channel feeds", Value: "`/follow`, `/unfollow`, `/following`", Inline: false},
-			{Name: "Social features", Value: "`/compare`, `/taste`, `/roulette`", Inline: false},
-			{Name: "Cache", Value: "`/refresh` clears cached Letterboxd data if something looks stale.", Inline: false},
-		},
+		Fields:      fields,
 	}
 }
 
@@ -49,6 +57,107 @@ func profileEmbed(profile letterboxd.Profile) *discordgo.MessageEmbed {
 			{Name: "Stats", Value: fmt.Sprintf("Films: `%s`\nThis year: `%s`\nLists: `%s`\nFollowing: `%s`\nFollowers: `%s`", comma(profile.FilmCount), comma(profile.ThisYearCount), comma(profile.ListCount), comma(profile.FollowingCount), comma(profile.FollowersCount)), Inline: true},
 			{Name: "Favorites", Value: favoriteList(profile.Favorites), Inline: true},
 		},
+	}
+}
+
+func statsEmbed(username string, stats letterboxd.MemberStats) *discordgo.MessageEmbed {
+	memberLabel := statsMemberLabel(stats)
+	if memberLabel == "" {
+		memberLabel = "@" + username
+	}
+
+	fields := []*discordgo.MessageEmbedField{
+		{Name: "Counts", Value: statsCountSummary(stats), Inline: false},
+	}
+	if years := statsYearsInReview(stats); len(years) > 0 {
+		fields = append(fields, &discordgo.MessageEmbedField{
+			Name:   "Years in review",
+			Value:  strings.Join(years, ", "),
+			Inline: false,
+		})
+	}
+	if histogram := statsRatingHistogram(stats); histogram != "" {
+		fields = append(fields, &discordgo.MessageEmbedField{
+			Name:   "Ratings spread",
+			Value:  histogram,
+			Inline: false,
+		})
+	}
+
+	return &discordgo.MessageEmbed{
+		Title:     fmt.Sprintf("Letterboxd stats for %s", memberLabel),
+		Color:     accentColor,
+		Thumbnail: &discordgo.MessageEmbedThumbnail{URL: stats.Member.AvatarURL},
+		Fields:    fields,
+	}
+}
+
+func watchlistEmbed(username, genre string, films []letterboxd.FilmSummary) *discordgo.MessageEmbed {
+	fields := []*discordgo.MessageEmbedField{
+		{Name: "Films", Value: filmSummaryList(films), Inline: false},
+	}
+	if genre != "" {
+		fields = append(fields, &discordgo.MessageEmbedField{Name: "Filter", Value: genre, Inline: true})
+	}
+
+	return &discordgo.MessageEmbed{
+		Title:       fmt.Sprintf("%s's watchlist", displayUsername(username)),
+		Description: fmt.Sprintf("Showing %d film%s.", len(films), pluralize(len(films))),
+		Color:       accentColor,
+		Thumbnail:   filmSummaryThumbnail(films),
+		Fields:      fields,
+	}
+}
+
+func watchpickEmbed(username, genre string, film letterboxd.FilmSummary) *discordgo.MessageEmbed {
+	return &discordgo.MessageEmbed{
+		Title:       fmt.Sprintf("%s's watchpick", displayUsername(username)),
+		Description: fmt.Sprintf("Random pick from the watchlist%s.", filterSuffix(genre)),
+		Color:       alertColor,
+		URL:         filmSummaryURL(film),
+		Thumbnail:   filmSummaryThumbnail([]letterboxd.FilmSummary{film}),
+		Fields: []*discordgo.MessageEmbedField{
+			{Name: "Film", Value: filmSummaryLine(film), Inline: false},
+		},
+	}
+}
+
+func activityEmbed(username string, items []letterboxd.ActivityItem) *discordgo.MessageEmbed {
+	lines := make([]string, 0, len(items))
+	for _, item := range items {
+		lines = append(lines, activityItemLine(item))
+	}
+
+	return &discordgo.MessageEmbed{
+		Title:       fmt.Sprintf("Recent activity for %s", displayUsername(username)),
+		Description: strings.Join(lines, "\n"),
+		Color:       accentColor,
+	}
+}
+
+func discoverEmbed(genre, service string, films []letterboxd.FilmSummary) *discordgo.MessageEmbed {
+	description := "Trending recommendations from the official Letterboxd catalog."
+	if genre != "" || service != "" {
+		description = fmt.Sprintf("Filtered%s%s.", filterSuffix(genre), serviceSuffix(service))
+	}
+
+	fields := []*discordgo.MessageEmbedField{
+		{Name: "Films", Value: filmSummaryList(films), Inline: false},
+	}
+	if genre != "" {
+		fields = append(fields, &discordgo.MessageEmbedField{Name: "Genre", Value: genre, Inline: true})
+	}
+	if service != "" {
+		fields = append(fields, &discordgo.MessageEmbedField{Name: "Service", Value: service, Inline: true})
+	}
+	fields = append(fields, &discordgo.MessageEmbedField{Name: "Sort", Value: "Popularity this week", Inline: true})
+
+	return &discordgo.MessageEmbed{
+		Title:       "Discover films",
+		Description: description,
+		Color:       alertColor,
+		Thumbnail:   filmSummaryThumbnail(films),
+		Fields:      fields,
 	}
 }
 
@@ -331,4 +440,221 @@ func minInt(left, right int) int {
 		return left
 	}
 	return right
+}
+
+func statsMemberLabel(stats letterboxd.MemberStats) string {
+	if stats.Member.DisplayName != "" && stats.Member.Username != "" {
+		return fmt.Sprintf("%s (@%s)", stats.Member.DisplayName, stats.Member.Username)
+	}
+	if stats.Member.DisplayName != "" {
+		return stats.Member.DisplayName
+	}
+	if stats.Member.Username != "" {
+		return "@" + stats.Member.Username
+	}
+	return ""
+}
+
+func statsCountSummary(stats letterboxd.MemberStats) string {
+	counts := stats.Counts
+	lines := []string{
+		fmt.Sprintf("Watches: `%s`", comma(counts.Watches)),
+		fmt.Sprintf("Ratings: `%s`", comma(counts.Ratings)),
+		fmt.Sprintf("Reviews: `%s`", comma(counts.Reviews)),
+		fmt.Sprintf("Diary: `%s` total • `%s` this year", comma(counts.DiaryEntries), comma(counts.DiaryEntriesThisYear)),
+		fmt.Sprintf("Watchlist: `%s`", comma(counts.Watchlist)),
+		fmt.Sprintf("Followers: `%s` • Following: `%s`", comma(counts.Followers), comma(counts.Following)),
+	}
+	return strings.Join(lines, "\n")
+}
+
+func statsYearsInReview(stats letterboxd.MemberStats) []string {
+	values := make([]string, 0, len(stats.YearsInReview))
+	for _, year := range stats.YearsInReview {
+		if year <= 0 {
+			continue
+		}
+		values = append(values, strconv.Itoa(year))
+	}
+	return values
+}
+
+func statsRatingHistogram(stats letterboxd.MemberStats) string {
+	if len(stats.RatingsHistogram) == 0 {
+		return ""
+	}
+
+	lines := make([]string, 0, minInt(len(stats.RatingsHistogram), 6))
+	for _, bar := range stats.RatingsHistogram[:minInt(len(stats.RatingsHistogram), 6)] {
+		lines = append(lines, fmt.Sprintf("`%.1f` stars: `%s`", bar.Rating, comma(bar.Count)))
+	}
+	return strings.Join(lines, "\n")
+}
+
+func filmSummaryList(films []letterboxd.FilmSummary) string {
+	if len(films) == 0 {
+		return "No films found."
+	}
+
+	lines := make([]string, 0, len(films))
+	for _, film := range films {
+		lines = append(lines, filmSummaryLine(film))
+	}
+	return strings.Join(lines, "\n")
+}
+
+func filmSummaryLine(film letterboxd.FilmSummary) string {
+	label := filmSummaryTitle(film)
+	if url := filmSummaryURL(film); url != "" {
+		label = fmt.Sprintf("[%s](%s)", label, url)
+	}
+
+	details := make([]string, 0, 3)
+	if film.RuntimeMinutes > 0 {
+		details = append(details, fmt.Sprintf("%d mins", film.RuntimeMinutes))
+	}
+	if film.Rating > 0 {
+		details = append(details, fmt.Sprintf("%.1f/5", film.Rating))
+	}
+	if len(film.Directors) > 0 {
+		details = append(details, strings.Join(limitStrings(film.Directors, 2), ", "))
+	}
+
+	if len(details) == 0 {
+		return "• " + label
+	}
+	return fmt.Sprintf("• %s — %s", label, strings.Join(details, " • "))
+}
+
+func filmSummaryTitle(film letterboxd.FilmSummary) string {
+	title := strings.TrimSpace(film.Title)
+	if title == "" {
+		title = "Unknown title"
+	}
+	if film.Year > 0 {
+		return fmt.Sprintf("%s (%d)", title, film.Year)
+	}
+	return title
+}
+
+func filmSummaryURL(film letterboxd.FilmSummary) string {
+	if strings.TrimSpace(film.ShortURL) != "" {
+		return strings.TrimSpace(film.ShortURL)
+	}
+	return strings.TrimSpace(film.URL)
+}
+
+func filmSummaryThumbnail(films []letterboxd.FilmSummary) *discordgo.MessageEmbedThumbnail {
+	for _, film := range films {
+		if strings.TrimSpace(film.PosterURL) != "" {
+			return &discordgo.MessageEmbedThumbnail{URL: film.PosterURL}
+		}
+	}
+	return nil
+}
+
+func activityItemLine(item letterboxd.ActivityItem) string {
+	title := ""
+	if item.LogEntry != nil && item.LogEntry.Film.Title != "" {
+		title = filmSummaryTitle(item.LogEntry.Film)
+	}
+	if title == "" && item.Film != nil {
+		title = filmSummaryTitle(*item.Film)
+	}
+
+	switch item.Type {
+	case "FilmWatchActivity":
+		return fmt.Sprintf("• Watched %s%s", emptyFallback(title, "a film"), ratingSuffix(item.Rating))
+	case "ReviewResponseActivity":
+		return fmt.Sprintf("• Reviewed %s%s", emptyFallback(title, "a film"), ratingSuffix(item.Rating))
+	case "DiaryEntryActivity":
+		return fmt.Sprintf("• Logged %s%s", emptyFallback(title, "a film"), ratingSuffix(item.Rating))
+	case "MemberFollowingActivity":
+		if item.Followed != nil && item.Followed.Username != "" {
+			return fmt.Sprintf("• Followed @%s", item.Followed.Username)
+		}
+	}
+
+	if item.List != nil && item.List.Title != "" {
+		if strings.TrimSpace(item.List.URL) != "" {
+			return fmt.Sprintf("• %s — [%s](%s)", prettifyActivityType(item.Type), item.List.Title, item.List.URL)
+		}
+		return fmt.Sprintf("• %s — %s", prettifyActivityType(item.Type), item.List.Title)
+	}
+	if title != "" {
+		return fmt.Sprintf("• %s %s%s", prettifyActivityType(item.Type), title, ratingSuffix(item.Rating))
+	}
+	return "• " + prettifyActivityType(item.Type)
+}
+
+func prettifyActivityType(raw string) string {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return "Recent activity"
+	}
+	raw = strings.TrimSuffix(raw, "Activity")
+	raw = strings.TrimSuffix(raw, "Response")
+	raw = strings.ReplaceAll(raw, "Member", "")
+	raw = strings.ReplaceAll(raw, "Film", "")
+	raw = strings.ReplaceAll(raw, "LogEntry", "")
+	parts := splitCamel(raw)
+	if len(parts) == 0 {
+		return "Recent activity"
+	}
+	return strings.Join(parts, " ")
+}
+
+func splitCamel(value string) []string {
+	if value == "" {
+		return nil
+	}
+
+	parts := make([]string, 0, 4)
+	start := 0
+	for index := 1; index < len(value); index++ {
+		if value[index] >= 'A' && value[index] <= 'Z' {
+			parts = append(parts, value[start:index])
+			start = index
+		}
+	}
+	parts = append(parts, value[start:])
+	return parts
+}
+
+func displayUsername(username string) string {
+	username = strings.TrimSpace(username)
+	if username == "" {
+		return "This member"
+	}
+	return "@" + username
+}
+
+func pluralize(count int) string {
+	if count == 1 {
+		return ""
+	}
+	return "s"
+}
+
+func filterSuffix(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return ""
+	}
+	return " for `" + value + "`"
+}
+
+func serviceSuffix(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return ""
+	}
+	return " on `" + value + "`"
+}
+
+func ratingSuffix(rating float64) string {
+	if rating == 0 {
+		return ""
+	}
+	return fmt.Sprintf(" • `%s`", ratingLabel(rating))
 }

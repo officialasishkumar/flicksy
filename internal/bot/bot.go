@@ -19,14 +19,15 @@ import (
 )
 
 type Bot struct {
-	config   config.Config
-	logger   *slog.Logger
-	client   *letterboxd.Client
-	store    *store.Store
-	session  *discordgo.Session
-	poller   *follows.Poller
-	random   *rand.Rand
-	commands []*discordgo.ApplicationCommand
+	config      config.Config
+	logger      *slog.Logger
+	client      *letterboxd.Client
+	store       *store.Store
+	session     *discordgo.Session
+	poller      *follows.Poller
+	random      *rand.Rand
+	officialAPI bool
+	commands    []*discordgo.ApplicationCommand
 }
 
 type commandResponse struct {
@@ -42,13 +43,14 @@ func New(cfg config.Config, logger *slog.Logger, client *letterboxd.Client, stat
 	session.Identify.Intents = discordgo.IntentsGuilds
 
 	bot := &Bot{
-		config:   cfg,
-		logger:   logger,
-		client:   client,
-		store:    stateStore,
-		session:  session,
-		random:   rand.New(rand.NewSource(time.Now().UnixNano())),
-		commands: slashCommands(),
+		config:      cfg,
+		logger:      logger,
+		client:      client,
+		store:       stateStore,
+		session:     session,
+		random:      rand.New(rand.NewSource(time.Now().UnixNano())),
+		officialAPI: client.HasOfficialAPI(),
+		commands:    slashCommands(client.HasOfficialAPI()),
 	}
 
 	session.AddHandler(bot.onInteractionCreate)
@@ -131,7 +133,7 @@ func (b *Bot) onInteractionCreate(session *discordgo.Session, event *discordgo.I
 func (b *Bot) dispatchCommand(ctx context.Context, session *discordgo.Session, event *discordgo.InteractionCreate) (commandResponse, error) {
 	switch event.ApplicationCommandData().Name {
 	case "help":
-		return commandResponse{embeds: []*discordgo.MessageEmbed{helpEmbed()}}, nil
+		return commandResponse{embeds: []*discordgo.MessageEmbed{helpEmbed(b.officialAPI)}}, nil
 	case "connect":
 		return b.handleConnect(ctx, event)
 	case "disconnect":
@@ -160,6 +162,16 @@ func (b *Bot) dispatchCommand(ctx context.Context, session *discordgo.Session, e
 		return b.handleTaste(ctx, event)
 	case "roulette":
 		return b.handleRoulette(ctx, event)
+	case "stats":
+		return b.handleStats(ctx, event)
+	case "watchlist":
+		return b.handleWatchlist(ctx, event)
+	case "watchpick":
+		return b.handleWatchpick(ctx, event)
+	case "activity":
+		return b.handleActivity(ctx, event)
+	case "discover":
+		return b.handleDiscover(ctx, event)
 	default:
 		return commandResponse{}, fmt.Errorf("no handler available for %s", event.ApplicationCommandData().Name)
 	}
@@ -419,10 +431,151 @@ func (b *Bot) handleRoulette(ctx context.Context, event *discordgo.InteractionCr
 	return commandResponse{embeds: []*discordgo.MessageEmbed{filmEmbed(film, "Roulette: "+theme)}}, nil
 }
 
+func (b *Bot) handleStats(ctx context.Context, event *discordgo.InteractionCreate) (commandResponse, error) {
+	if err := b.requireOfficialAPI(); err != nil {
+		return commandResponse{}, err
+	}
+
+	username, err := b.resolveUsername(event, optionString(event, "username"))
+	if err != nil {
+		return commandResponse{}, err
+	}
+
+	stats, err := b.client.FetchMemberStats(ctx, username)
+	if err != nil {
+		return commandResponse{}, err
+	}
+
+	return commandResponse{embeds: []*discordgo.MessageEmbed{statsEmbed(username, stats)}}, nil
+}
+
+func (b *Bot) handleWatchlist(ctx context.Context, event *discordgo.InteractionCreate) (commandResponse, error) {
+	if err := b.requireOfficialAPI(); err != nil {
+		return commandResponse{}, err
+	}
+
+	username, err := b.resolveUsername(event, optionString(event, "username"))
+	if err != nil {
+		return commandResponse{}, err
+	}
+
+	limit := optionInt(event, "count", 5)
+	if limit < 1 {
+		limit = 5
+	}
+	if limit > 10 {
+		limit = 10
+	}
+
+	genre := optionString(event, "genre")
+	films, err := b.client.FetchWatchlist(ctx, username, limit, genre)
+	if err != nil {
+		return commandResponse{}, err
+	}
+	if len(films) == 0 {
+		return commandResponse{
+			content: fmt.Sprintf("No public watchlist films were found for `%s`%s.", username, filterLabelSuffix(genre)),
+		}, nil
+	}
+
+	return commandResponse{embeds: []*discordgo.MessageEmbed{watchlistEmbed(username, genre, films)}}, nil
+}
+
+func (b *Bot) handleWatchpick(ctx context.Context, event *discordgo.InteractionCreate) (commandResponse, error) {
+	if err := b.requireOfficialAPI(); err != nil {
+		return commandResponse{}, err
+	}
+
+	username, err := b.resolveUsername(event, optionString(event, "username"))
+	if err != nil {
+		return commandResponse{}, err
+	}
+
+	genre := optionString(event, "genre")
+	films, err := b.client.FetchWatchlist(ctx, username, 50, genre)
+	if err != nil {
+		return commandResponse{}, err
+	}
+	if len(films) == 0 {
+		return commandResponse{
+			content: fmt.Sprintf("No public watchlist films were found for `%s`%s.", username, filterLabelSuffix(genre)),
+		}, nil
+	}
+
+	pick := films[b.random.Intn(len(films))]
+	return commandResponse{embeds: []*discordgo.MessageEmbed{watchpickEmbed(username, genre, pick)}}, nil
+}
+
+func (b *Bot) handleActivity(ctx context.Context, event *discordgo.InteractionCreate) (commandResponse, error) {
+	if err := b.requireOfficialAPI(); err != nil {
+		return commandResponse{}, err
+	}
+
+	username, err := b.resolveUsername(event, optionString(event, "username"))
+	if err != nil {
+		return commandResponse{}, err
+	}
+
+	limit := optionInt(event, "count", 5)
+	if limit < 1 {
+		limit = 5
+	}
+	if limit > 10 {
+		limit = 10
+	}
+
+	items, err := b.client.FetchActivity(ctx, username, limit)
+	if err != nil {
+		return commandResponse{}, err
+	}
+	if len(items) == 0 {
+		return commandResponse{content: fmt.Sprintf("No recent official activity was found for `%s`.", username)}, nil
+	}
+
+	return commandResponse{embeds: []*discordgo.MessageEmbed{activityEmbed(username, items)}}, nil
+}
+
+func (b *Bot) handleDiscover(ctx context.Context, event *discordgo.InteractionCreate) (commandResponse, error) {
+	if err := b.requireOfficialAPI(); err != nil {
+		return commandResponse{}, err
+	}
+
+	limit := optionInt(event, "count", 6)
+	if limit < 1 {
+		limit = 6
+	}
+	if limit > 10 {
+		limit = 10
+	}
+
+	genre := optionString(event, "genre")
+	service := optionString(event, "service")
+	films, err := b.client.DiscoverFilms(ctx, letterboxd.DiscoveryOptions{
+		Genre:   genre,
+		Service: service,
+		Limit:   limit,
+	})
+	if err != nil {
+		return commandResponse{}, err
+	}
+	if len(films) == 0 {
+		return commandResponse{content: "No discovery matches were found for that filter combination."}, nil
+	}
+
+	return commandResponse{embeds: []*discordgo.MessageEmbed{discoverEmbed(genre, service, films)}}, nil
+}
+
 func (b *Bot) publishFollowEntry(ctx context.Context, subscription store.FollowSubscription, entry letterboxd.DiaryEntry) error {
 	embed := followEntryEmbed(subscription.Username, entry)
 	_, err := b.session.ChannelMessageSendEmbed(subscription.ChannelID, embed)
 	return err
+}
+
+func (b *Bot) requireOfficialAPI() error {
+	if b.officialAPI {
+		return nil
+	}
+	return fmt.Errorf("official Letterboxd API commands are disabled. Set `FLICKSY_LETTERBOXD_CLIENT_ID` and `FLICKSY_LETTERBOXD_CLIENT_SECRET` to enable them")
 }
 
 func (b *Bot) resolveUsername(event *discordgo.InteractionCreate, explicit string) (string, error) {
@@ -535,4 +688,12 @@ var rouletteThemes = []string{
 	"thriller",
 	"coming of age",
 	"cult classic",
+}
+
+func filterLabelSuffix(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return ""
+	}
+	return fmt.Sprintf(" with the `%s` filter", value)
 }
