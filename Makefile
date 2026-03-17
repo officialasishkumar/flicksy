@@ -1,9 +1,11 @@
 GO ?= $(shell command -v go || echo /opt/homebrew/bin/go)
+GOLANGCI_LINT ?= $(shell command -v golangci-lint || echo $(CURDIR)/.bin/golangci-lint)
+GOLANGCI_LINT_VERSION ?= v2.11.3
 BINARY := flicksy
 DIST_DIR := dist
 VERSION ?= snapshot
 
-.PHONY: build test run fmt vet ci release clean
+.PHONY: build test run fmt vet lint ci release clean
 
 build:
 	$(GO) build -o $(BINARY) ./cmd/flicksy
@@ -19,6 +21,10 @@ fmt:
 
 vet:
 	$(GO) vet ./...
+
+lint:
+	@test -x "$(GOLANGCI_LINT)" || (echo "install golangci-lint with: GOBIN=$(CURDIR)/.bin go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)" && exit 1)
+	$(GOLANGCI_LINT) run ./...
 
 ci: fmt vet test build
 

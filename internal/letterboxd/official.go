@@ -45,10 +45,7 @@ func (c *Client) FetchMemberStats(ctx context.Context, username string) (MemberS
 		YearsInReview:    append([]int(nil), response.YearsInReview...),
 	}
 	for _, bar := range response.RatingsHistogram {
-		stats.RatingsHistogram = append(stats.RatingsHistogram, RatingsHistogramBar{
-			Rating: bar.Rating,
-			Count:  bar.Count,
-		})
+		stats.RatingsHistogram = append(stats.RatingsHistogram, RatingsHistogramBar(bar))
 	}
 	if stats.Member.Username == "" {
 		stats.Member.Username = username
@@ -294,7 +291,7 @@ func (c *Client) resolveLetterboxdIdentifier(ctx context.Context, cacheKey, requ
 
 		identifier := strings.TrimSpace(response.Header.Get("x-letterboxd-identifier"))
 		_, _ = io.Copy(io.Discard, response.Body)
-		response.Body.Close()
+		_ = response.Body.Close()
 
 		if response.StatusCode >= 400 {
 			if method == http.MethodHead {
@@ -421,7 +418,9 @@ func (c *Client) apiRequest(ctx context.Context, path string, values url.Values,
 	if err != nil {
 		return nil, 0, fmt.Errorf("send official api request: %w", err)
 	}
-	defer response.Body.Close()
+	defer func() {
+		_ = response.Body.Close()
+	}()
 
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
@@ -457,7 +456,9 @@ func (c *Client) accessToken(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("send official api token request: %w", err)
 	}
-	defer response.Body.Close()
+	defer func() {
+		_ = response.Body.Close()
+	}()
 
 	if response.StatusCode >= 400 {
 		return "", fmt.Errorf("official api token request failed with status %s", response.Status)
@@ -484,7 +485,7 @@ func (c *Client) accessToken(ctx context.Context) (string, error) {
 	if payload.ExpiresIn > 0 {
 		expiry = time.Now().Add(time.Duration(payload.ExpiresIn) * time.Second)
 	}
-	if expiry.Sub(time.Now()) > time.Minute {
+	if time.Until(expiry) > time.Minute {
 		expiry = expiry.Add(-time.Minute)
 	}
 
@@ -559,27 +560,7 @@ type apiCounts struct {
 }
 
 func (c apiCounts) toModel() MemberStatisticsCounts {
-	return MemberStatisticsCounts{
-		FilmLikes:            c.FilmLikes,
-		ListLikes:            c.ListLikes,
-		ReviewLikes:          c.ReviewLikes,
-		StoryLikes:           c.StoryLikes,
-		Watches:              c.Watches,
-		Ratings:              c.Ratings,
-		Reviews:              c.Reviews,
-		DiaryEntries:         c.DiaryEntries,
-		DiaryEntriesThisYear: c.DiaryEntriesThisYear,
-		FilmsInDiaryThisYear: c.FilmsInDiaryThisYear,
-		FilmsInDiaryLastYear: c.FilmsInDiaryLastYear,
-		Watchlist:            c.Watchlist,
-		Lists:                c.Lists,
-		UnpublishedLists:     c.UnpublishedLists,
-		AccessedSharedLists:  c.AccessedSharedLists,
-		Followers:            c.Followers,
-		Following:            c.Following,
-		ListTags:             c.ListTags,
-		FilmTags:             c.FilmTags,
-	}
+	return MemberStatisticsCounts(c)
 }
 
 type apiHistogramBar struct {

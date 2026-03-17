@@ -63,7 +63,11 @@ func (b *Bot) Run(ctx context.Context) error {
 	if err := b.session.Open(); err != nil {
 		return fmt.Errorf("open discord session: %w", err)
 	}
-	defer b.session.Close()
+	defer func() {
+		if err := b.session.Close(); err != nil {
+			b.logger.Warn("failed to close discord session", "error", err)
+		}
+	}()
 
 	if err := b.registerCommands(); err != nil {
 		return err
@@ -121,7 +125,9 @@ func (b *Bot) onInteractionCreate(session *discordgo.Session, event *discordgo.I
 	response, err := b.dispatchCommand(ctx, session, event)
 	if err != nil {
 		b.logger.Warn("command failed", "command", name, "error", err)
-		editResponse(session, event.Interaction, commandResponse{content: err.Error()})
+		if editErr := editResponse(session, event.Interaction, commandResponse{content: err.Error()}); editErr != nil {
+			b.logger.Warn("failed to edit interaction error response", "command", name, "error", editErr)
+		}
 		return
 	}
 

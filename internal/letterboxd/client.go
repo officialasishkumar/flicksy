@@ -16,6 +16,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -433,7 +435,9 @@ func (c *Client) fetchCached(ctx context.Context, cacheKey, requestURL string) (
 	if err != nil {
 		return nil, fmt.Errorf("send request: %w", err)
 	}
-	defer response.Body.Close()
+	defer func() {
+		_ = response.Body.Close()
+	}()
 
 	if response.StatusCode >= 400 {
 		return nil, fmt.Errorf("request failed with status %s", response.Status)
@@ -538,7 +542,12 @@ func resolveDuckDuckGoResult(raw string) string {
 func filmTitleFromURL(raw string) string {
 	slug := slugFromURL(raw)
 	slug = strings.ReplaceAll(slug, "-", " ")
-	return strings.Title(slug)
+	words := strings.Fields(strings.ToLower(slug))
+	for i, word := range words {
+		firstRune, size := utf8.DecodeRuneInString(word)
+		words[i] = string(unicode.ToTitle(firstRune)) + word[size:]
+	}
+	return strings.Join(words, " ")
 }
 
 type filmJSONLD struct {

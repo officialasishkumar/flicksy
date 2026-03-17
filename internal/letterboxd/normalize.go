@@ -48,14 +48,6 @@ func slugFromURL(rawURL string) string {
 	return parts[len(parts)-1]
 }
 
-func pathFromURL(rawURL string) string {
-	parsed, err := url.Parse(rawURL)
-	if err != nil {
-		return rawURL
-	}
-	return parsed.Path
-}
-
 func titleWithoutYear(value string) string {
 	return strings.TrimSpace(trailingYearPattern.ReplaceAllString(strings.TrimSpace(value), ""))
 }
