@@ -1,19 +1,84 @@
 # CineBuddy
 
-CineBuddy is a self-hosted Discord bot for Letterboxd communities, inspired by Filmlinkd and rebuilt in Go with a simpler deployment model.
+CineBuddy is a self-hosted Discord bot for Letterboxd communities, rebuilt in Go and designed to be simpler to run than the original Filmlinkd stack.
 
-## Planned command surface
+It focuses on public Letterboxd pages and RSS feeds, so it works without private API access or GCP infrastructure.
 
-- `/connect` to link your default Letterboxd account
-- `/profile` to show a member card
-- `/diary` to show recent diary entries
-- `/film` to search and show a film card
-- `/list` to search a user's lists
-- `/follow`, `/unfollow`, `/following` for channel subscriptions
-- `/compare` and `/taste` for profile comparisons
-- `/logged` to find recent log entries for a film
-- `/roulette` for discovery
+## What it does
 
-## Configuration
+- Link a Discord user to a default Letterboxd account with `/connect`
+- Show profile cards with `/profile`
+- Show recent diary activity with `/diary`
+- Search films with `/film`
+- Search recent public lists with `/list`
+- Track recent logs for a film with `/logged`
+- Follow public diary activity into a Discord channel with `/follow`
+- Compare two profiles with `/compare`
+- Score compatibility with `/taste`
+- Do film discovery with `/roulette`
+- Clear in-memory cache with `/refresh`
 
-The bot will use environment variables for its runtime configuration. Full setup instructions will be added as the implementation lands.
+## Why the bot is easier to use
+
+- Most commands can use your linked account automatically after `/connect`
+- The bot is a single Go binary
+- State is stored in one JSON file under `data/state.json`
+- No database, queue, or cloud service is required
+
+## Commands
+
+- `/help`
+- `/connect username`
+- `/disconnect`
+- `/profile [username]`
+- `/diary [username] [count]`
+- `/film query`
+- `/list query [username]`
+- `/follow username [channel]`
+- `/unfollow username [channel]`
+- `/following [channel]`
+- `/logged film [username]`
+- `/refresh [username]`
+- `/compare other [username]`
+- `/taste other [username]`
+- `/roulette [theme]`
+
+## Setup
+
+1. Create a Discord application and bot in the Discord developer portal.
+2. Copy the bot token.
+3. Fill out `.env` from `.env.example`.
+4. Run `make test`.
+5. Run `make build` or `make run`.
+6. Invite the bot with the `applications.commands` and `bot` scopes.
+
+## Environment variables
+
+- `DISCORD_TOKEN`
+  Required. Discord bot token.
+- `DISCORD_GUILD_ID`
+  Optional. If set, commands are registered to one guild for faster iteration. If unset, commands are registered globally.
+- `CINEBUDDY_DATA_DIR`
+  Optional. Defaults to `./data`.
+- `CINEBUDDY_HTTP_TIMEOUT`
+  Optional. Defaults to `15s`.
+- `CINEBUDDY_POLL_INTERVAL`
+  Optional. Defaults to `5m`.
+- `CINEBUDDY_USER_AGENT`
+  Optional. Override the default HTTP user agent.
+
+## Development
+
+```bash
+make test
+make build
+make run
+```
+
+## Notes and limitations
+
+- CineBuddy intentionally uses public Letterboxd surfaces instead of private API access.
+- Profile, film, diary, and follow features are based on public profile pages, film pages, and RSS feeds.
+- List search is limited to the public RSS list history available for a user.
+- `/logged` works against the recent public RSS window, not a complete historical archive.
+- Film search uses DuckDuckGo site search to avoid the Cloudflare challenge on Letterboxd search pages.
