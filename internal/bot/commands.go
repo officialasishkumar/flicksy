@@ -203,6 +203,39 @@ func slashCommands(includeOfficialAPI bool) []*discordgo.ApplicationCommand {
 	if includeOfficialAPI {
 		commands = append(commands, []*discordgo.ApplicationCommand{
 			{
+				Name:        "party",
+				Description: "Match watchlists between multiple users to find common films",
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "user1",
+						Description: "First Letterboxd username",
+						Required:    true,
+					},
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "user2",
+						Description: "Second Letterboxd username",
+						Required:    true,
+					},
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "user3",
+						Description: "Third Letterboxd username (optional)",
+					},
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "user4",
+						Description: "Fourth Letterboxd username (optional)",
+					},
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "user5",
+						Description: "Fifth Letterboxd username (optional)",
+					},
+				},
+			},
+			{
 				Name:        "stats",
 				Description: "Show Letterboxd member stats",
 				Options: []*discordgo.ApplicationCommandOption{

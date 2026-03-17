@@ -164,6 +164,8 @@ func (b *Bot) dispatchCommand(ctx context.Context, session *discordgo.Session, e
 		return b.handleRoulette(ctx, event)
 	case "stats":
 		return b.handleStats(ctx, event)
+	case "party":
+		return b.handleParty(ctx, event)
 	case "watchlist":
 		return b.handleWatchlist(ctx, event)
 	case "watchpick":
