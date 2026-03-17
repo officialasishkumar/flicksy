@@ -1,6 +1,6 @@
 # Flicksy
 
-Flicksy is a self-hosted Discord bot for Letterboxd communities, rebuilt in Go and designed to be simpler to run than the original Filmlinkd stack.
+Flicksy is a self-hosted Discord bot for Letterboxd communities, built in Go and designed to be simple to run, easy to use, and fun to share in a server.
 
 It focuses on public Letterboxd pages and RSS feeds, so it works without private API access or GCP infrastructure.
 
