@@ -9,13 +9,15 @@ import (
 )
 
 type Config struct {
-	AppName      string
-	DiscordToken string
-	GuildID      string
-	DataDir      string
-	HTTPTimeout  time.Duration
-	PollInterval time.Duration
-	UserAgent    string
+	AppName                   string
+	DiscordToken              string
+	GuildID                   string
+	DataDir                   string
+	HTTPTimeout               time.Duration
+	PollInterval              time.Duration
+	UserAgent                 string
+	LetterboxdAPIClientID     string
+	LetterboxdAPIClientSecret string
 }
 
 func Load() (Config, error) {
@@ -41,10 +43,15 @@ func Load() (Config, error) {
 		UserAgent: getenv("FLICKSY_USER_AGENT",
 			"Mozilla/5.0 (compatible; Flicksy/1.0; +https://github.com/asish/flicksy)",
 		),
+		LetterboxdAPIClientID:     os.Getenv("FLICKSY_LETTERBOXD_CLIENT_ID"),
+		LetterboxdAPIClientSecret: os.Getenv("FLICKSY_LETTERBOXD_CLIENT_SECRET"),
 	}
 
 	if cfg.DiscordToken == "" {
 		return Config{}, fmt.Errorf("DISCORD_TOKEN is required")
+	}
+	if (cfg.LetterboxdAPIClientID == "") != (cfg.LetterboxdAPIClientSecret == "") {
+		return Config{}, fmt.Errorf("FLICKSY_LETTERBOXD_CLIENT_ID and FLICKSY_LETTERBOXD_CLIENT_SECRET must be set together")
 	}
 
 	return cfg, nil

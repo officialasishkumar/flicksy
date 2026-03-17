@@ -14,6 +14,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
@@ -25,24 +26,62 @@ var (
 )
 
 type Client struct {
-	httpClient *http.Client
-	userAgent  string
-	cache      *cache
+	httpClient  *http.Client
+	userAgent   string
+	cache       *cache
+	official    OfficialAPIConfig
+	officialMu  sync.Mutex
+	token       string
+	tokenExpiry time.Time
+	baseURL     string
+	tokenURL    string
+	webBaseURL  string
 }
 
-func NewClient(httpTimeout time.Duration, userAgent string) *Client {
+func NewClient(httpTimeout time.Duration, userAgent string, official ...OfficialAPIConfig) *Client {
+	cfg := OfficialAPIConfig{}
+	if len(official) > 0 {
+		cfg = official[0]
+	}
+
+	baseURL := strings.TrimRight(cfg.BaseURL, "/")
+	if baseURL == "" {
+		baseURL = "https://api.letterboxd.com/api/v0"
+	}
+	tokenURL := strings.TrimSpace(cfg.TokenURL)
+	if tokenURL == "" {
+		tokenURL = baseURL + "/auth/token"
+	}
+	webBaseURL := strings.TrimRight(cfg.WebBaseURL, "/")
+	if webBaseURL == "" {
+		webBaseURL = "https://letterboxd.com"
+	}
+
 	return &Client{
 		httpClient: &http.Client{
 			Timeout: httpTimeout,
 		},
-		userAgent: userAgent,
-		cache:     newCache(10 * time.Minute),
+		userAgent:  userAgent,
+		cache:      newCache(10 * time.Minute),
+		official:   cfg,
+		baseURL:    baseURL,
+		tokenURL:   tokenURL,
+		webBaseURL: webBaseURL,
 	}
 }
 
+func (c *Client) HasOfficialAPI() bool {
+	return strings.TrimSpace(c.official.ClientID) != "" && strings.TrimSpace(c.official.ClientSecret) != ""
+}
+
 func (c *Client) RefreshProfile(username string) {
-	c.cache.clearPrefix("profile:" + strings.ToLower(username))
-	c.cache.clearPrefix("rss:" + strings.ToLower(username))
+	username = strings.ToLower(strings.Trim(strings.TrimSpace(username), "/"))
+	c.cache.clearPrefix("profile:" + username)
+	c.cache.clearPrefix("rss:" + username)
+	c.cache.clearPrefix("member-id:" + username)
+	c.cache.clearPrefix("stats:" + username)
+	c.cache.clearPrefix("watchlist:" + username)
+	c.cache.clearPrefix("activity:" + username)
 }
 
 func (c *Client) ClearAll() {
@@ -223,6 +262,12 @@ func (c *Client) SearchFilm(ctx context.Context, query string, limit int) ([]Fil
 		}}, nil
 	}
 
+	if c.HasOfficialAPI() {
+		if results, err := c.searchFilmOfficial(ctx, query, limit); err == nil && len(results) > 0 {
+			return results, nil
+		}
+	}
+
 	searchURL := "https://duckduckgo.com/html/?q=" + url.QueryEscape(`site:letterboxd.com/film/ "`+query+`"`)
 	body, err := c.fetchCached(ctx, "search:"+normalizeText(query), searchURL)
 	if err != nil {
@@ -268,6 +313,12 @@ func (c *Client) SearchFilm(ctx context.Context, query string, limit int) ([]Fil
 }
 
 func (c *Client) FetchFilm(ctx context.Context, query string) (Film, error) {
+	if c.HasOfficialAPI() {
+		if film, err := c.fetchFilmOfficial(ctx, query); err == nil {
+			return film, nil
+		}
+	}
+
 	filmURL := normalizeFilmURL(query)
 	if !looksLikeFilmURL(filmURL) {
 		results, err := c.SearchFilm(ctx, query, 1)

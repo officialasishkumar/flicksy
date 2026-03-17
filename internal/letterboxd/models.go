@@ -2,6 +2,14 @@ package letterboxd
 
 import "time"
 
+type OfficialAPIConfig struct {
+	ClientID     string
+	ClientSecret string
+	BaseURL      string
+	TokenURL     string
+	WebBaseURL   string
+}
+
 type Profile struct {
 	Username       string
 	DisplayName    string
@@ -15,6 +23,98 @@ type Profile struct {
 	FollowingCount int
 	FollowersCount int
 	Favorites      []FavoriteFilm
+}
+
+type MemberSummary struct {
+	ID          string
+	Username    string
+	DisplayName string
+	ShortName   string
+	AvatarURL   string
+}
+
+type MemberStatisticsCounts struct {
+	FilmLikes            int
+	ListLikes            int
+	ReviewLikes          int
+	StoryLikes           int
+	Watches              int
+	Ratings              int
+	Reviews              int
+	DiaryEntries         int
+	DiaryEntriesThisYear int
+	FilmsInDiaryThisYear int
+	FilmsInDiaryLastYear int
+	Watchlist            int
+	Lists                int
+	UnpublishedLists     int
+	AccessedSharedLists  int
+	Followers            int
+	Following            int
+	ListTags             int
+	FilmTags             int
+}
+
+type RatingsHistogramBar struct {
+	Rating float64
+	Count  int
+}
+
+type MemberStats struct {
+	Member           MemberSummary
+	Counts           MemberStatisticsCounts
+	RatingsHistogram []RatingsHistogramBar
+	YearsInReview    []int
+}
+
+type FilmSummary struct {
+	ID             string
+	Title          string
+	Year           int
+	URL            string
+	ShortURL       string
+	PosterURL      string
+	Rating         float64
+	RatingCount    int
+	ReviewCount    int
+	RuntimeMinutes int
+	Genres         []string
+	Directors      []string
+}
+
+type LogEntrySummary struct {
+	ID          string
+	URL         string
+	Film        FilmSummary
+	WatchedAt   time.Time
+	WatchedDate string
+	Rating      float64
+	Rewatch     bool
+	Liked       bool
+	Excerpt     string
+}
+
+type ActivityItem struct {
+	Type        string
+	WhenCreated time.Time
+	Member      MemberSummary
+	Film        *FilmSummary
+	List        *ListSummary
+	Followed    *MemberSummary
+	LogEntry    *LogEntrySummary
+	Rating      float64
+	Response    string
+	Comment     string
+}
+
+type DiscoveryOptions struct {
+	Genre       string
+	Service     string
+	Limit       int
+	Sort        string
+	Adult       bool
+	IncludeTags []string
+	ExcludeTags []string
 }
 
 type FavoriteFilm struct {

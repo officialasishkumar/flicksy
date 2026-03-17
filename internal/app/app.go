@@ -31,7 +31,10 @@ func New(_ context.Context, logger *slog.Logger) (*App, error) {
 		return nil, fmt.Errorf("initialize state store: %w", err)
 	}
 
-	client := letterboxd.NewClient(cfg.HTTPTimeout, cfg.UserAgent)
+	client := letterboxd.NewClient(cfg.HTTPTimeout, cfg.UserAgent, letterboxd.OfficialAPIConfig{
+		ClientID:     cfg.LetterboxdAPIClientID,
+		ClientSecret: cfg.LetterboxdAPIClientSecret,
+	})
 
 	discordBot, err := bot.New(cfg, logger, client, stateStore)
 	if err != nil {
