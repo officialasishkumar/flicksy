@@ -19,27 +19,27 @@ type Config struct {
 }
 
 func Load() (Config, error) {
-	dataDir := getenv("CINEBUDDY_DATA_DIR", filepath.Join(".", "data"))
+	dataDir := getenv("FILMPAL_DATA_DIR", filepath.Join(".", "data"))
 
-	httpTimeout, err := durationFromEnv("CINEBUDDY_HTTP_TIMEOUT", 15*time.Second)
+	httpTimeout, err := durationFromEnv("FILMPAL_HTTP_TIMEOUT", 15*time.Second)
 	if err != nil {
 		return Config{}, err
 	}
 
-	pollInterval, err := durationFromEnv("CINEBUDDY_POLL_INTERVAL", 5*time.Minute)
+	pollInterval, err := durationFromEnv("FILMPAL_POLL_INTERVAL", 5*time.Minute)
 	if err != nil {
 		return Config{}, err
 	}
 
 	cfg := Config{
-		AppName:      "CineBuddy",
+		AppName:      "FilmPal",
 		DiscordToken: os.Getenv("DISCORD_TOKEN"),
 		GuildID:      os.Getenv("DISCORD_GUILD_ID"),
 		DataDir:      dataDir,
 		HTTPTimeout:  httpTimeout,
 		PollInterval: pollInterval,
-		UserAgent: getenv("CINEBUDDY_USER_AGENT",
-			"Mozilla/5.0 (compatible; CineBuddy/1.0; +https://github.com/asish/cinebuddy)",
+		UserAgent: getenv("FILMPAL_USER_AGENT",
+			"Mozilla/5.0 (compatible; FilmPal/1.0; +https://github.com/asish/filmpal)",
 		),
 	}
 

@@ -1,13 +1,13 @@
 GO ?= $(shell command -v go || echo /opt/homebrew/bin/go)
-BINARY := cinebuddy
+BINARY := filmpal
 
 .PHONY: build test run
 
 build:
-	$(GO) build -o $(BINARY) ./cmd/cinebuddy
+	$(GO) build -o $(BINARY) ./cmd/filmpal
 
 test:
 	$(GO) test ./...
 
 run:
-	$(GO) run ./cmd/cinebuddy
+	$(GO) run ./cmd/filmpal

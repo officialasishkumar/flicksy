@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/asish/cinebuddy/internal/letterboxd"
-	"github.com/asish/cinebuddy/internal/store"
+	"github.com/asish/filmpal/internal/letterboxd"
+	"github.com/asish/filmpal/internal/store"
 )
 
 func TestEntriesBeforeLastSeenReturnsOldestFirst(t *testing.T) {

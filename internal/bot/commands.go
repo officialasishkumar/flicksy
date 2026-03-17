@@ -6,7 +6,7 @@ func slashCommands() []*discordgo.ApplicationCommand {
 	return []*discordgo.ApplicationCommand{
 		{
 			Name:        "help",
-			Description: "Show CineBuddy commands and shortcuts",
+			Description: "Show FilmPal commands and shortcuts",
 		},
 		{
 			Name:        "connect",

@@ -1,4 +1,4 @@
-module github.com/asish/cinebuddy
+module github.com/asish/filmpal
 
 go 1.26.0
 

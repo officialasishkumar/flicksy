@@ -6,10 +6,10 @@ import (
 	"log/slog"
 	"path/filepath"
 
-	"github.com/asish/cinebuddy/internal/bot"
-	"github.com/asish/cinebuddy/internal/config"
-	"github.com/asish/cinebuddy/internal/letterboxd"
-	"github.com/asish/cinebuddy/internal/store"
+	"github.com/asish/filmpal/internal/bot"
+	"github.com/asish/filmpal/internal/config"
+	"github.com/asish/filmpal/internal/letterboxd"
+	"github.com/asish/filmpal/internal/store"
 )
 
 type App struct {
@@ -48,10 +48,10 @@ func New(_ context.Context, logger *slog.Logger) (*App, error) {
 }
 
 func (a *App) Run(ctx context.Context) error {
-	a.logger.Info("cinebuddy initialized", "app_name", a.config.AppName, "data_dir", a.config.DataDir)
+	a.logger.Info("filmpal initialized", "app_name", a.config.AppName, "data_dir", a.config.DataDir)
 	if err := a.bot.Run(ctx); err != nil {
 		return err
 	}
-	a.logger.Info("cinebuddy shutting down")
+	a.logger.Info("filmpal shutting down")
 	return nil
 }

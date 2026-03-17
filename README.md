@@ -1,6 +1,6 @@
-# CineBuddy
+# FilmPal
 
-CineBuddy is a self-hosted Discord bot for Letterboxd communities, rebuilt in Go and designed to be simpler to run than the original Filmlinkd stack.
+FilmPal is a self-hosted Discord bot for Letterboxd communities, rebuilt in Go and designed to be simpler to run than the original Filmlinkd stack.
 
 It focuses on public Letterboxd pages and RSS feeds, so it works without private API access or GCP infrastructure.
 
@@ -58,13 +58,13 @@ It focuses on public Letterboxd pages and RSS feeds, so it works without private
   Required. Discord bot token.
 - `DISCORD_GUILD_ID`
   Optional. If set, commands are registered to one guild for faster iteration. If unset, commands are registered globally.
-- `CINEBUDDY_DATA_DIR`
+- `FILMPAL_DATA_DIR`
   Optional. Defaults to `./data`.
-- `CINEBUDDY_HTTP_TIMEOUT`
+- `FILMPAL_HTTP_TIMEOUT`
   Optional. Defaults to `15s`.
-- `CINEBUDDY_POLL_INTERVAL`
+- `FILMPAL_POLL_INTERVAL`
   Optional. Defaults to `5m`.
-- `CINEBUDDY_USER_AGENT`
+- `FILMPAL_USER_AGENT`
   Optional. Override the default HTTP user agent.
 
 ## Development
@@ -77,7 +77,7 @@ make run
 
 ## Notes and limitations
 
-- CineBuddy intentionally uses public Letterboxd surfaces instead of private API access.
+- FilmPal intentionally uses public Letterboxd surfaces instead of private API access.
 - Profile, film, diary, and follow features are based on public profile pages, film pages, and RSS feeds.
 - List search is limited to the public RSS list history available for a user.
 - `/logged` works against the recent public RSS window, not a complete historical archive.

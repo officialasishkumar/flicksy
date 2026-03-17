@@ -2,5 +2,6 @@
 .env
 .env.local
 /cinebuddy
+/filmpal
 /dist/
 /data/
