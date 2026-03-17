@@ -236,6 +236,17 @@ func slashCommands(includeOfficialAPI bool) []*discordgo.ApplicationCommand {
 				},
 			},
 			{
+				Name:        "rec",
+				Description: "Get a film recommendation based on your favorites",
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "username",
+						Description: "Letterboxd username, or leave blank to use your linked account",
+					},
+				},
+			},
+			{
 				Name:        "stats",
 				Description: "Show Letterboxd member stats",
 				Options: []*discordgo.ApplicationCommandOption{
